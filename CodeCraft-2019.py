@@ -116,6 +116,7 @@ def createCrossNet(crossData,roadData):
         crossNet[crossP[i][0]][crossP[i][1]] = i
     return crossNet,crossP
 #遍历找路
+#根据当前位置和终点位置 确定当前路口的遍历方向
 def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
     #如果为终点 退出
     if i==endi and j ==endj:
@@ -400,8 +401,13 @@ def main():
     logging.info("answer_path is %s" % (answer_path))
 
     # to read input file
+    #(id 0,from 1,to 2,speed 3,planTime 4)
     carData = readData(car_path)
+    #(id,roadId_up,roadId_right,roadId_down,roadId_left)
+    #(0,   1            2           3           4      )
     crossData = readData(cross_path)
+    #(id,length,speed,channel,from,to,isDuplex)
+    #(0 ,   1,    2,     3,     4,  5,    6   )
     roadData = readData(road_path)
     map_c = dict()
     map_r = dict()

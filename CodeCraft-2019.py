@@ -34,7 +34,8 @@ def writeData(data,fileName):
         f.write(')')
         f.write('\n')
 
-
+#遍历所有的cross 调整方向
+#方向 1上 2右 3下 4左
 def DFS(crossData,roadData, visitDone,crossId,direction=None,preCrossId=None):
     if visitDone[crossId]== 1:
         return
@@ -56,7 +57,8 @@ def DFS(crossData,roadData, visitDone,crossId,direction=None,preCrossId=None):
             nextCrossId = roadData[roadId][4] if roadData[roadId][4]!=crossId else roadData[roadId][5]
             DFS(crossData,roadData, visitDone,nextCrossId,i,crossId)
 
-
+#遍历所有的cross 给每个路口建立方位关系
+#第一个点设定坐标为 i=0,j=0
 def DFS1(crossP,crossData,roadData, visitDone,crossId,direction=None,preCrossId=None):
     if visitDone[crossId]== 1:
         return
@@ -74,9 +76,11 @@ def DFS1(crossP,crossData,roadData, visitDone,crossId,direction=None,preCrossId=
             nextCrossId = roadData[roadId][4] if roadData[roadId][4]!=crossId else roadData[roadId][5]
             print(crossId,nextCrossId,crossP[crossId])
             if i == 1:
+                #如果为上 则i方向的坐标-1
                 crossP[nextCrossId][0] = crossP[crossId][0]- 1
                 crossP[nextCrossId][1] = crossP[crossId][1]
             elif i == 2:
+                #如果为右 则j方向的坐标+1
                 crossP[nextCrossId][1] = crossP[crossId][1]+ 1
                 crossP[nextCrossId][0] = crossP[crossId][0]
             elif i == 3:
@@ -92,11 +96,14 @@ def DFS1(crossP,crossData,roadData, visitDone,crossId,direction=None,preCrossId=
 def createCrossNet(crossData,roadData):
     crossP = np.zeros([crossData.shape[0],2],dtype=np.int64)
     visitDone = np.zeros(crossData.shape[0],dtype=np.int64)
+    #第一次遍历 调整方向
     DFS(crossData,roadData, visitDone,11)
 
 
     visitDone = np.zeros(crossData.shape[0],dtype=np.int64)
+    #第二次遍历 建立方位关系 将关系储存在crossP中
     DFS1(crossP,crossData,roadData, visitDone,11)
+    #调整crossP，把crossP相对位置变为绝对位置 建立地图 
     min_i = np.min(crossP[:,0])
     min_j = np.min(crossP[:,1])
     max_i = np.max(crossP[:,0])
@@ -108,13 +115,19 @@ def createCrossNet(crossData,roadData):
         crossP[i][1] -= min_j
         crossNet[crossP[i][0]][crossP[i][1]] = i
     return crossNet,crossP
+#遍历找路
 def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
+    #如果为终点 退出
     if i==endi and j ==endj:
         return i,j
     idx = crossNet[i][j]
+    #如果当前路口为空 返回
     if idx == -1:
         return i,j
+    #标记当前路口为 已经走过的路口
     crossFlag[idx] = 1
+    #确定遍历方向
+    #如果当前位置在 终点的左上方 则优先遍历右2 下3两个方向 以下同理
     if i<endi and j<endj:
         d=[2,3,4,1]
     elif i<endi and j>endj:
@@ -131,11 +144,15 @@ def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
         d=[4,1,3,2]
     elif i==endi and j<endj:
         d=[2,1,3,4]
+    #for k in d:
     for k in range(4):
+        #若这个方向没有路 
         if crossData[idx][d[k]] == -1:
             continue
+        #若为单行道 且当前路口为to(终点)
         if roadData[crossData[idx][d[k]]][6]==0 and roadData[crossData[idx][d[k]]][5]==crossData[idx][0]:
             continue
+        #如果下个路口已经去过
         if d[k]==1 and crossFlag[crossNet[i-1][j]]==1:
             continue
         elif d[k]==2 and crossFlag[crossNet[i][j+1]]==1:
@@ -144,6 +161,7 @@ def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
             continue
         elif d[k]==4 and crossFlag[crossNet[i][j-1]]==1:
             continue
+        #进入到下个路口
         route.append(crossData[idx][d[k]])
         if d[k] == 1:
             i -= 1
@@ -154,8 +172,10 @@ def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
         elif d[k] ==4:
             j -= 1
         i,j = dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route)
+        #找到终点则结束
         if i ==endi and j == endj:
             return i,j
+        #否则退回
         if d[k] == 1:
             i += 1
         elif d[k] ==2:
@@ -167,6 +187,7 @@ def dfs(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
         route.pop()
     crossFlag[idx] = 0
     return i,j
+#计算当前点和中心点的距离
 def dx(cc,cc1,i,j):
     return abs(i-cc)*abs(i-cc)+abs(j-cc1)*abs(j-cc1)
 def dfs1(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
@@ -180,6 +201,7 @@ def dfs1(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route):
     crossFlag[idx] = 1
     if i<endi and j<endj:
         d=[3,2,4,1]
+        #往边上走
         if dx(cc,cc1,i+1,j)<dx(cc,cc1,i,j+1):
             d=[2,3,4,1]
     elif i<endi and j>endj:
@@ -257,6 +279,7 @@ def dfs2(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route,roadL):
     crossFlag[idx] = 1
     if i<endi and j<endj:
         d=[3,2,4,1]
+        #往lenght比较短的地方走
         if roadL[idx][2]<roadL[idx][3]:
             d=[2,3,4,1]
     elif i<endi and j>endj:
@@ -343,7 +366,7 @@ def initRoadWeight(crossNet,crossP,crossData,roadData):
             if crossData[i][j] == -1:
                 roadW[i][j] = 10000
             else:
-                idx = roadData[crossData[i][j]][5] -1
+                idx = roadData[crossData[i][j]][5]
                 roadW[i][j] = computeDist(center,center1,crossP[idx][0],crossP[idx][1])
     return roadW
 def initRoadLenght(crossData,roadData):
@@ -382,10 +405,13 @@ def main():
     roadData = readData(road_path)
     map_c = dict()
     map_r = dict()
+    #给cross从0开始编号
     for i in range(len(crossData)):
         map_c[crossData[i][0]] = i
+    #给road从0开始编号
     for i in range(len(roadData)):
         map_r[roadData[i][0]] = i
+    #替换掉
     for car in carData:
         car[1] = map_c[car[1]]
         car[2] = map_c[car[2]]
@@ -401,8 +427,12 @@ def main():
     #writeData(crossData,'r.txt')
     # process
     
+
+    #建立地图
     crossNet,crossP = createCrossNet(crossData,roadData)
     crossFlag = np.zeros(crossData.shape[0],dtype=np.int64)
+
+    #初始化权重
     roadL = initRoadLenght(crossData,roadData)
     roadW = initRoadWeight(crossNet,crossP,crossData,roadData)
     print(crossNet)
@@ -412,6 +442,7 @@ def main():
     carCount = 0
     tt = 0
     maxPlanTime = 0
+    #按速度大小发车 速度快的先发
     carData = sorted(carData,key=lambda car: car[3],reverse=True)
     a2 = 0
     for car in carData:
@@ -433,6 +464,7 @@ def main():
         #         a2 -= 2
         # if carCount%(18+a2+car[3]*3)==0:
         #     tt += 1
+        #每时间段发10+a2+car[3]*2辆车
         if carCount%(10+a2+car[3]*2)==0:
             tt += 1 
         carCount+=1
@@ -441,8 +473,10 @@ def main():
         i,j = crossP[car[1]] #start cross
         endi,endj = crossP[car[2]] #end cross
         if random.randint(1,100)%3==0:
+            #按道路长度短的优先遍历
             i,j=dfs2(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route,roadL)
         else:
+            #按离中心远的优先遍历
             #i,j=dfs2(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route,roadW)
             i,j=dfs1(i,j,endi,endj,crossNet,crossData,roadData,crossFlag,route)
         for i in range(2,len(route)):

@@ -74,7 +74,6 @@ def DFS1(crossP,crossData,roadData, visitDone,crossId,direction=None,preCrossId=
         roadId = crossData[crossId][i]
         if roadId!=-1:
             nextCrossId = roadData[roadId][4] if roadData[roadId][4]!=crossId else roadData[roadId][5]
-            print(crossId,nextCrossId,crossP[crossId])
             if i == 1:
                 #如果为上 则i方向的坐标-1
                 crossP[nextCrossId][0] = crossP[crossId][0]- 1
